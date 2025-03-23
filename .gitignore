@@ -23,3 +23,6 @@ Gemfile.lock
 
 tmp/
 
+.test-point
+.probatio-output.rb
+
