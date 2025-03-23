@@ -11,6 +11,7 @@ to what's written in a crontab.
 
 Given `etc/qrontab_dev`:
 ```
+@reboot       p [ :hello, "just started" ]
 * * * * *     p [ :hello, :min, Time.now ]
 * * * * * *   p [ :hello, :sec, Time.now ]
 ```

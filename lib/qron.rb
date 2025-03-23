@@ -14,6 +14,7 @@ class Qron
   def initialize(opts={})
 
     @options = opts
+    @booted = false
 
     start unless opts[:start] == false
   end
@@ -62,9 +63,17 @@ class Qron
 
     File.readlines(t)
       .inject([]) { |a, l|
+
         l = l.strip
+
         next a if l == ''
         next a if l.start_with?('#')
+
+        if l.start_with?(/@reboot\s/)
+          a << [ '@reboot', l.split(/\s+/, 2).last ]
+          next a
+        end
+
         ll5 = l.split(/\s+/, 6)
         ll6 = ll5.pop.split(/\s+/, 2)
         ll5 = ll5.join(' ')
@@ -75,6 +84,7 @@ class Qron
           r = "#{ll6} #{r}"
         end
         a << [ c, r ]
+
         a }
   end
 
@@ -84,10 +94,20 @@ class Qron
 
     @tab.each do |cron, command|
 
-      do_perform(now, cron, command) if cron.match?(now)
+      do_perform(now, cron, command) if cron_match?(cron, now)
     end
 
     @last_sec = now.to_i
+    @booted = true
+  end
+
+  def cron_match?(cron, time)
+
+    if cron == '@reboot'
+      @booted == false
+    else
+      cron.match?(time)
+    end
   end
 
   def do_perform(now, cron, command)
