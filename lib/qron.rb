@@ -6,7 +6,7 @@ require 'stagnum'
 
 class Qron
 
-  VERSION = '0.9.0'.freeze
+  VERSION = '1.0.0'.freeze
 
   attr_reader :options
   attr_reader :tab, :thread, :started, :last_sec, :work_pool
