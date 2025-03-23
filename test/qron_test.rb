@@ -14,14 +14,13 @@ group Qron do
 
     q = Qron.new(tab: 'test/qrontab')
 
-    sleep 1.5
-    sleep 1.5
+    sleep 2.1
 
     assert $seen, true
 
     q.stop
 
-    sleep 1.5
+    sleep 1.4
 
     assert q.started, nil
   end
