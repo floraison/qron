@@ -92,9 +92,9 @@ class Qron
 
   def do_perform(now, cron, command)
 
-    @work_pool.enqueue({ time: now, cron: cron, command: command }) do
+    @work_pool.enqueue({ time: now, cron: cron, command: command }) do |ctx|
 
-      ::Kernel.eval(command)
+      ::Kernel.eval("Proc.new { |ctx| #{command} }").call(ctx)
     end
   end
 end
