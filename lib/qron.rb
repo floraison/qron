@@ -25,15 +25,17 @@ class Qron
     @last_sec = @started.to_i
 
     @work_pool ||=
-      Stagnum::Pool.new("Qron-#{Qron::VERSION}-pool", @options[:workers] || 3)
+      Stagnum::Pool.new("qron-#{Qron::VERSION}-pool", @options[:workers] || 3)
 
     @thread =
       Thread.new do
+        Thread.current[:name] =
+          @options[:thread_name] || "qron-#{Qron::VERSION}-thread"
         loop do
           break if @started == nil
           now = Time.now
           next if now.to_i == @last_sec
-          perform(now)
+          tick(now)
           sleep 0.7 + (0.5 * rand)
         end
       end
@@ -44,11 +46,30 @@ class Qron
   def stop
 
     @started = nil
+
+    @thread.kill
+    @thread = nil
   end
 
   def join
 
     @thread && @thread.join
+  end
+
+  # In some deployments, another thread ticks the qron instance. So #tick(now)
+  # is a public method.
+  #
+  def tick(now)
+
+    @tab ||= read_tab
+
+    @tab.each do |cron, command|
+
+      do_perform(now, cron, command) if cron_match?(cron, now)
+    end
+
+    @last_sec = now.to_i
+    @booted = true
   end
 
   protected
@@ -86,19 +107,6 @@ class Qron
         a << [ c, r ]
 
         a }
-  end
-
-  def perform(now)
-
-    @tab ||= read_tab
-
-    @tab.each do |cron, command|
-
-      do_perform(now, cron, command) if cron_match?(cron, now)
-    end
-
-    @last_sec = now.to_i
-    @booted = true
   end
 
   def cron_match?(cron, time)
