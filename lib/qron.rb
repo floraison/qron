@@ -25,12 +25,13 @@ class Qron
     @last_sec = @started.to_i
 
     @work_pool ||=
-      Stagnum::Pool.new("qron-#{Qron::VERSION}-pool", @options[:workers] || 3)
+      ::Stagnum::Pool.new(
+        "qron-#{::Qron::VERSION}-pool", @options[:workers] || 3)
 
     @thread =
-      Thread.new do
-        Thread.current[:name] =
-          @options[:thread_name] || "qron-#{Qron::VERSION}-thread"
+      ::Thread.new do
+        ::Thread.current[:name] =
+          @options[:thread_name] || "qron-#{::Qron::VERSION}-thread"
         loop do
           break if @started == nil
           now = Time.now
@@ -61,9 +62,7 @@ class Qron
   #
   def tick(now)
 
-    @tab ||= read_tab
-
-    @tab.each do |cron, command|
+    fetch_tab.each do |cron, command|
 
       do_perform(now, cron, command) if cron_match?(cron, now)
     end
@@ -72,13 +71,18 @@ class Qron
     @booted = true
   end
 
+  def fetch_tab
+
+    @tab ||= read_tab
+  end
+
   protected
 
   def read_tab
 
     t = @options[:crontab] || @options[:tab] || 'qrontab'
 
-    return t if t.is_a?(Array)
+    return t if t.is_a?(::Array)
 
     # TODO timezones
 
@@ -99,9 +103,9 @@ class Qron
         ll6 = ll5.pop.split(/\s+/, 2)
         ll5 = ll5.join(' ')
         ll6, r = *ll6
-        c = Fugit::Cron.parse("#{ll5} #{ll6}")
+        c = ::Fugit::Cron.parse("#{ll5} #{ll6}")
         unless c
-          c = Fugit::Cron.parse(ll5)
+          c = ::Fugit::Cron.parse(ll5)
           r = "#{ll6} #{r}"
         end
         a << [ c, r ]
@@ -120,10 +124,15 @@ class Qron
 
   def do_perform(now, cron, command)
 
-    @work_pool.enqueue({ time: now, cron: cron, command: command }) do |ctx|
+    @work_pool.enqueue(make_context(now, cron, command)) do |ctx|
 
       ::Kernel.eval("Proc.new { |ctx| #{command} }").call(ctx)
     end
+  end
+
+  def make_context(now, cron, command)
+
+    { time: now, cron: cron, command: command }
   end
 end
 
