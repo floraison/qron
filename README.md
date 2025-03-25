@@ -50,6 +50,7 @@ It's OK to use timezones in the qrontab file:
 30 4 1,15 * 5  Europe/Budapest   p [ :budapest, :min, Time.now ]
 ```
 
+
 ## LICENSE
 
 MIT, see [LICENSE.txt](LICENSE.txt)

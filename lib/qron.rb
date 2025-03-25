@@ -107,14 +107,10 @@ class Qron
         next a if l == ''
         next a if l.start_with?('#')
 
-        entry =
+        a << (
           parse_special(l) ||
           parse_cron(l, 7) || parse_cron(l, 6) || parse_cron(l, 5) ||
-          fail(ArgumentError.new("could not parse >#{l}<"))
-
-        a << entry
-
-        a }
+          fail(ArgumentError.new("could not parse >#{l}<"))) }
   end
 
   def cron_match?(cron, time)
