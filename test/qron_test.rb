@@ -14,7 +14,6 @@ group Qron do
       f.write(%{
 * * * * * *  $seen = true
       })
-
     end
 
     $seen = false
@@ -24,6 +23,29 @@ group Qron do
     sleep 2.1
 
     assert $seen, true
+
+    q.stop
+
+    sleep 1.4
+
+    assert q.started, nil
+  end
+
+  test 'it schedules @reboot' do
+
+    File.open('test/qrontab', 'wb') do |f|
+      f.write(%{
+@reboot  $booted = true
+      })
+    end
+
+    $booted = false
+
+    q = Qron.new(tab: 'test/qrontab')
+
+    sleep 2.1
+
+    assert $booted, true
 
     q.stop
 

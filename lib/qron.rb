@@ -78,13 +78,26 @@ class Qron
 
   protected
 
+  def parse_special(line)
+
+    line.start_with?(/@reboot\s/) ?
+      [ '@reboot', line.split(/\s+/, 2).last ] :
+      nil
+  end
+
+  def parse_cron(line, word_count)
+
+    ll = line.split(/\s+/, word_count + 1)
+    c, r = ::Fugit::Cron.parse(ll.take(word_count).join(' ')), ll.last
+
+    c ? [ c, r] : nil
+  end
+
   def read_tab
 
     t = @options[:crontab] || @options[:tab] || 'qrontab'
 
     return t if t.is_a?(::Array)
-
-    # TODO timezones
 
     File.readlines(t)
       .inject([]) { |a, l|
@@ -94,21 +107,12 @@ class Qron
         next a if l == ''
         next a if l.start_with?('#')
 
-        if l.start_with?(/@reboot\s/)
-          a << [ '@reboot', l.split(/\s+/, 2).last ]
-          next a
-        end
+        entry =
+          parse_special(l) ||
+          parse_cron(l, 7) || parse_cron(l, 6) || parse_cron(l, 5) ||
+          fail(ArgumentError.new("could not parse >#{l}<"))
 
-        ll5 = l.split(/\s+/, 6)
-        ll6 = ll5.pop.split(/\s+/, 2)
-        ll5 = ll5.join(' ')
-        ll6, r = *ll6
-        c = ::Fugit::Cron.parse("#{ll5} #{ll6}")
-        unless c
-          c = ::Fugit::Cron.parse(ll5)
-          r = "#{ll6} #{r}"
-        end
-        a << [ c, r ]
+        a << entry
 
         a }
   end
