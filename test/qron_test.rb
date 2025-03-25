@@ -10,11 +10,10 @@ group Qron do
 
   test 'it schedules' do
 
-    File.open('test/qrontab', 'wb') do |f|
+    File.open('test/qrontab', 'wb') { |f|
       f.write(%{
 * * * * * *  $seen = true
-      })
-    end
+      }) }
 
     $seen = false
 
@@ -33,11 +32,10 @@ group Qron do
 
   test 'it schedules @reboot' do
 
-    File.open('test/qrontab', 'wb') do |f|
+    File.open('test/qrontab', 'wb') { |f|
       f.write(%{
 @reboot  $booted = true
-      })
-    end
+      }) }
 
     $booted = false
 
@@ -52,6 +50,26 @@ group Qron do
     sleep 1.4
 
     assert q.started, nil
+  end
+
+  test 'it schedules with a timezone' do
+
+    File.open('test/qrontab', 'wb') { |f|
+      f.write(%{
+* * * * *                    $a << 'five'
+* * * * * *                  $a << 'six'
+* * * * * Asia/Tokyo         $a << ctx[:cron].timezone.name
+* * * * * * Europe/Budapest  $a << ctx[:cron].timezone.name
+      }) }
+
+    $a = []
+
+    q = Qron.new(tab: 'test/qrontab')
+
+    sleep 2.1
+
+    assert $a.count { |e| e == 'six' } > 1
+    assert $a.count { |e| e == 'Europe/Budapest' } > 1
   end
 end
 
