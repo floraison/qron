@@ -10,6 +10,13 @@ group Qron do
 
   test 'it schedules' do
 
+    File.open('test/qrontab', 'wb') do |f|
+      f.write(%{
+* * * * * *  $seen = true
+      })
+
+    end
+
     $seen = false
 
     q = Qron.new(tab: 'test/qrontab')
