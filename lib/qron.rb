@@ -94,6 +94,49 @@ class Qron
 
   protected
 
+  def read_tab
+
+    parse(@options[:crontab] || @options[:tab] || 'qrontab')
+  end
+
+  def parse(t)
+
+    case t
+    when Array then parse_lines(t)
+    when /\n/ then parse_lines(t.lines)
+    when String then parse_file(t)
+    else fail(ArgumentError.new("cannot parse instance of #{t.class}"))
+    end
+
+  rescue => err
+
+    trigger_event(:on_tab_error, time: Time.now, error: err)
+
+    []
+  end
+
+  def parse_file(path)
+
+    parse_lines(File.readlines(path))
+  end
+
+  def parse_lines(ls)
+
+    ls.map { |l| parse_line(l) }.compact
+  end
+
+  def parse_line(l)
+
+    l = l.strip
+
+    return nil if l == ''
+    return nil if l.start_with?('#')
+
+    parse_special(l) ||
+    parse_cron(l, 7) || parse_cron(l, 6) || parse_cron(l, 5) ||
+    fail(ArgumentError.new("could not parse >#{l}<"))
+  end
+
   def parse_special(line)
 
     line.start_with?(/@reboot\s/) ?
@@ -107,32 +150,6 @@ class Qron
     c, r = ::Fugit::Cron.parse(ll.take(word_count).join(' ')), ll.last
 
     c ? [ c, r] : nil
-  end
-
-  def read_tab
-
-    t = @options[:crontab] || @options[:tab] || 'qrontab'
-
-    return t if t.is_a?(::Array)
-
-    File.readlines(t)
-      .inject([]) { |a, l|
-
-        l = l.strip
-
-        next a if l == ''
-        next a if l.start_with?('#')
-
-        a << (
-          parse_special(l) ||
-          parse_cron(l, 7) || parse_cron(l, 6) || parse_cron(l, 5) ||
-          fail(ArgumentError.new("could not parse >#{l}<"))) }
-
-  rescue => err
-
-    trigger_event(:on_tab_error, time: Time.now, error: err)
-
-    []
   end
 
   def cron_match?(cron, time)
