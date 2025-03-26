@@ -37,7 +37,7 @@ class Qron
           now = Time.now
           next if now.to_i == @last_sec
           tick(now)
-          sleep 0.7 + (0.5 * rand)
+          sleep(determine_sleep_time)
         end
       end
 
@@ -133,6 +133,11 @@ class Qron
   def make_context(now, cron, command)
 
     { time: now, cron: cron, command: command }
+  end
+
+  def determine_sleep_time
+
+    0.7 + (0.5 * rand)
   end
 end
 
