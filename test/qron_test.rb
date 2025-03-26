@@ -71,5 +71,31 @@ group Qron do
     assert $a.count { |e| e == 'six' } > 1
     assert $a.count { |e| e == 'Europe/Budapest' } > 1
   end
+
+  group '#on_error' do
+
+    test 'it catches errors in perform' do
+
+      File.open('test/qrontab', 'wb') { |f|
+        f.write(%{
+* * * * * *  fail 'hard'
+        }) }
+
+      $errors = []
+
+      q = Qron.new(tab: 'test/qrontab')
+      q.on_error { |ctx| $errors << ctx }
+
+      sleep 2.1
+
+      assert $errors.count > 0
+
+      q.stop
+
+      sleep 1.4
+
+      assert q.started, nil
+    end
+  end
 end
 

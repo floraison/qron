@@ -10,11 +10,13 @@ class Qron
 
   attr_reader :options
   attr_reader :tab, :thread, :started, :last_sec, :work_pool
+  attr_reader :listeners
 
   def initialize(opts={})
 
     @options = opts
     @booted = false
+    @listeners = []
 
     start unless opts[:start] == false
   end
@@ -64,7 +66,7 @@ class Qron
 
     fetch_tab.each do |cron, command|
 
-      do_perform(now, cron, command) if cron_match?(cron, now)
+      perform(now, cron, command) if cron_match?(cron, now)
     end
 
     @last_sec = now.to_i
@@ -74,6 +76,20 @@ class Qron
   def fetch_tab
 
     @tab ||= read_tab
+  end
+
+  def on_tab_error(&block); @listeners << [ :on_tab_error, block ]; end
+  #def on_tick_error(&block); @listeners << [ :on_tick_error, block ]; end
+  def on_perform_error(&block); @listeners << [ :on_perform_error, block ]; end
+
+  def on_error(&block)
+    @listeners << [ :on_tab_error, block ]
+    @listeners << [ :on_perform_error, block ]
+  end
+
+  def trigger_event(event_name, ctx)
+
+    @listeners.each { |name, block| block.call(ctx) if name == event_name }
   end
 
   protected
@@ -111,6 +127,10 @@ class Qron
           parse_special(l) ||
           parse_cron(l, 7) || parse_cron(l, 6) || parse_cron(l, 5) ||
           fail(ArgumentError.new("could not parse >#{l}<"))) }
+
+  rescue => err
+
+    trigger_event(:on_tab_error, time: Time.now, error: err)
   end
 
   def cron_match?(cron, time)
@@ -122,11 +142,15 @@ class Qron
     end
   end
 
-  def do_perform(now, cron, command)
+  def perform(now, cron, command)
 
     @work_pool.enqueue(make_context(now, cron, command)) do |ctx|
 
       ::Kernel.eval("Proc.new { |ctx| #{command} }").call(ctx)
+
+    rescue => err
+
+      trigger_event(:on_perform_error, time: Time.now, error: err)
     end
   end
 
