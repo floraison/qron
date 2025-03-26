@@ -131,6 +131,8 @@ class Qron
   rescue => err
 
     trigger_event(:on_tab_error, time: Time.now, error: err)
+
+    []
   end
 
   def cron_match?(cron, time)

@@ -66,7 +66,7 @@ group Qron do
 
     q = Qron.new(tab: 'test/qrontab')
 
-    sleep 2.1
+    sleep 2.8
 
     assert $a.count { |e| e == 'six' } > 1
     assert $a.count { |e| e == 'Europe/Budapest' } > 1
@@ -88,6 +88,33 @@ group Qron do
 
       sleep 2.1
 
+      assert $errors.count > 0
+
+      q.stop
+
+      sleep 1.4
+
+      assert q.started, nil
+    end
+  end
+
+  group '#on_tab_error' do
+
+    test 'it catches errors in tabs' do
+
+      File.open('test/qrontab', 'wb') { |f|
+        f.write(%{
+* pure fail
+        }) }
+
+      $errors = []
+
+      q = Qron.new(tab: 'test/qrontab')
+      q.on_tab_error { |ctx| $errors << ctx }
+
+      sleep 2.1
+
+#pp $errors
       assert $errors.count > 0
 
       q.stop
