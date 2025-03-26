@@ -141,3 +141,14 @@ class Qron
   end
 end
 
+
+# Should it be part of fugit?
+#
+class Fugit::Cron
+
+  def resolution
+
+    seconds == [ 0 ] ? :minute : :second
+  end
+end
+
