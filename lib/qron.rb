@@ -158,7 +158,8 @@ class Qron
 
   def make_context(now, cron, command)
 
-    { time: now, cron: cron, command: command }
+    { time: now, cron: cron, command: command,
+      qron: self }
   end
 
   def determine_sleep_time
