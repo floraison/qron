@@ -32,13 +32,12 @@ class Qron
     @last_sec = @started.to_i
 
     @work_pool ||=
-      ::Stagnum::Pool.new(
-        "qron-#{::Qron::VERSION}-pool", @options[:workers] || 3)
+      Stagnum::Pool.new("qron-#{Qron::VERSION}-pool", @options[:workers] || 3)
 
     @thread =
-      ::Thread.new do
-        ::Thread.current[:name] =
-          @options[:thread_name] || "qron-#{::Qron::VERSION}-thread"
+      Thread.new do
+        Thread.current[:name] =
+          @options[:thread_name] || "qron-#{Qron::VERSION}-thread"
         loop do
           break if @started == nil
           now = Time.now
@@ -162,7 +161,7 @@ class Qron
   def parse_cron(line, word_count)
 
     ll = line.split(/\s+/, word_count + 1)
-    c, r = ::Fugit::Cron.parse(ll.take(word_count).join(' ')), ll.last
+    c, r = Fugit::Cron.parse(ll.take(word_count).join(' ')), ll.last
 
     c ? [ c, r] : nil
   end
@@ -180,7 +179,7 @@ class Qron
 
     @work_pool.enqueue(make_context(now, cron, command)) do |ctx|
 
-      ::Kernel.eval("Proc.new { |ctx| #{command} }").call(ctx)
+      Kernel.eval("Proc.new { |ctx| #{command} }").call(ctx)
 
     rescue => err
 
