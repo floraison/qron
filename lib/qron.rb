@@ -15,6 +15,11 @@ class Qron
   def initialize(opts={})
 
     @options = opts
+    @options[:reload] = false unless opts.has_key?(:reload)
+
+    @tab = nil
+    @tab_mtime = Time.now
+
     @booted = false
     @listeners = []
 
@@ -42,8 +47,6 @@ class Qron
           sleep(determine_sleep_time)
         end
       end
-
-    # TODO rescue perform...
   end
 
   def stop
@@ -75,7 +78,15 @@ class Qron
 
   def fetch_tab
 
-    @tab ||= read_tab
+    return @tab if @tab && @options[:reload] == false
+
+    t = @options[:crontab] || @options[:tab] || 'qrontab'
+    m = mtime(t)
+
+    @tab = nil if m > @tab_mtime
+    @tab_mtime = m
+
+    @tab ||= parse(t)
   end
 
   def on_tab_error(&block); @listeners << [ :on_tab_error, block ]; end
@@ -94,9 +105,13 @@ class Qron
 
   protected
 
-  def read_tab
+  def mtime(t)
 
-    parse(@options[:crontab] || @options[:tab] || 'qrontab')
+    if t.is_a?(String) && t.count("\n") < 1 && File.exist?(t)
+      File.mtime(t)
+    else
+      Time.now
+    end
   end
 
   def parse(t)

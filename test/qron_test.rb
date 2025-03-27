@@ -70,6 +70,10 @@ group Qron do
 
     assert $a.count { |e| e == 'six' } > 1
     assert $a.count { |e| e == 'Europe/Budapest' } > 1
+
+    q.stop
+
+    sleep 1.4
   end
 
   group '#on_error' do
@@ -122,6 +126,61 @@ group Qron do
       sleep 1.4
 
       assert q.started, nil
+    end
+  end
+
+  group 'reload' do
+
+    test 'does not reload by default' do
+
+      File.open('test/qrontab', 'wb') { |f|
+        f.write(%{
+          * * * * * *  $a << 'alpha'
+        }) }
+
+      $a = []
+
+      q = Qron.new(tab: 'test/qrontab')
+
+      sleep 1.4
+
+      File.open('test/qrontab', 'wb') { |f|
+        f.write(%{
+          * * * * * *  $a << 'bravo'
+        }) }
+
+      sleep 1.4
+
+      assert $a.count { |e| e == 'alpha' } > 1
+      assert $a.count { |e| e == 'bravo' } < 1
+
+      q.stop; sleep 1.4
+    end
+
+    test 'reloads if reload: true' do
+
+      File.open('test/qrontab', 'wb') { |f|
+        f.write(%{
+          * * * * * *  $a << 'alpha'
+        }) }
+
+      $a = []
+
+      q = Qron.new(tab: 'test/qrontab', reload: true)
+
+      sleep 1.7
+
+      File.open('test/qrontab', 'wb') { |f|
+        f.write(%{
+          * * * * * *  $a << 'bravo'
+        }) }
+
+      sleep 1.7
+
+      assert $a.count { |e| e == 'alpha' } > 1
+      assert $a.count { |e| e == 'bravo' } > 1
+
+      q.stop; sleep 1.4
     end
   end
 end
