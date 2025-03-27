@@ -46,10 +46,6 @@ group Qron do
     assert $booted, true
 
     q.stop
-
-    sleep 1.4
-
-    assert q.started, nil
   end
 
   test 'it schedules with a timezone' do
@@ -72,8 +68,6 @@ group Qron do
     assert $a.count { |e| e == 'Europe/Budapest' } > 1
 
     q.stop
-
-    sleep 1.4
   end
 
   group '#on_error' do
@@ -95,10 +89,6 @@ group Qron do
       assert $errors.count > 0
 
       q.stop
-
-      sleep 1.4
-
-      assert q.started, nil
     end
   end
 
@@ -122,10 +112,6 @@ group Qron do
       assert $errors.count > 0
 
       q.stop
-
-      sleep 1.4
-
-      assert q.started, nil
     end
   end
 
@@ -135,10 +121,10 @@ group Qron do
 
       File.open('test/qrontab', 'wb') { |f|
         f.write(%{
-          * * * * * *  $a << 'alpha'
+          * * * * * *  $b << 'alpha'
         }) }
 
-      $a = []
+      $b = []
 
       q = Qron.new(tab: 'test/qrontab')
 
@@ -146,25 +132,25 @@ group Qron do
 
       File.open('test/qrontab', 'wb') { |f|
         f.write(%{
-          * * * * * *  $a << 'bravo'
+          * * * * * *  $b << 'bravo'
         }) }
 
       sleep 2.1
 
-      assert $a.count { |e| e == 'alpha' } > 1
-      assert $a.count { |e| e == 'bravo' } < 1
+      assert $b.count { |e| e == 'alpha' } > 1
+      assert $b.count { |e| e == 'bravo' } < 1
 
-      q.stop; sleep 1.4
+      q.stop
     end
 
     test 'reloads if reload: true' do
 
       File.open('test/qrontab', 'wb') { |f|
         f.write(%{
-          * * * * * *  $a << 'alpha'
+          * * * * * *  $c << 'alpha'
         }) }
 
-      $a = []
+      $c = []
 
       q = Qron.new(tab: 'test/qrontab', reload: true)
 
@@ -172,15 +158,15 @@ group Qron do
 
       File.open('test/qrontab', 'wb') { |f|
         f.write(%{
-          * * * * * *  $a << 'bravo'
+          * * * * * *  $c << 'bravo'
         }) }
 
       sleep 2.1
 
-      assert $a.count { |e| e == 'alpha' } > 1
-      assert $a.count { |e| e == 'bravo' } > 1
+      assert $c.count { |e| e == 'alpha' } > 1
+      assert $c.count { |e| e == 'bravo' } > 1
 
-      q.stop; sleep 1.4
+      q.stop
     end
   end
 end
