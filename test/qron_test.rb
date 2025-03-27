@@ -142,14 +142,14 @@ group Qron do
 
       q = Qron.new(tab: 'test/qrontab')
 
-      sleep 1.4
+      sleep 2.1
 
       File.open('test/qrontab', 'wb') { |f|
         f.write(%{
           * * * * * *  $a << 'bravo'
         }) }
 
-      sleep 1.4
+      sleep 2.1
 
       assert $a.count { |e| e == 'alpha' } > 1
       assert $a.count { |e| e == 'bravo' } < 1
@@ -168,14 +168,14 @@ group Qron do
 
       q = Qron.new(tab: 'test/qrontab', reload: true)
 
-      sleep 1.7
+      sleep 2.1
 
       File.open('test/qrontab', 'wb') { |f|
         f.write(%{
           * * * * * *  $a << 'bravo'
         }) }
 
-      sleep 1.7
+      sleep 2.1
 
       assert $a.count { |e| e == 'alpha' } > 1
       assert $a.count { |e| e == 'bravo' } > 1
