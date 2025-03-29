@@ -37,7 +37,8 @@ A Ruby thread that wakes up in time to perform what's ordered in its crontab
     "#{s.name}.gemspec",
   ]
 
-  #s.add_runtime_dependency 'raabro', '~> 1.4'
+  s.add_runtime_dependency 'fugit', '~> 1.11'
+  s.add_runtime_dependency 'stagnum', '~> 1.0'
 
   s.add_development_dependency 'probatio', '~> 1.0'
 
