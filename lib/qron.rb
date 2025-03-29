@@ -9,7 +9,8 @@ class Qron
   VERSION = '1.0.0'.freeze
 
   attr_reader :options
-  attr_reader :tab, :thread, :started, :last_sec, :work_pool
+  attr_reader :tab, :thread, :started, :work_pool
+  attr_reader :tab_res, :tab_mtime
   attr_reader :listeners
 
   def initialize(opts={})
@@ -18,6 +19,7 @@ class Qron
     @options[:reload] = false unless opts.has_key?(:reload)
 
     @tab = nil
+    @tab_res = nil
     @tab_mtime = Time.now
 
     @booted = false
@@ -29,7 +31,6 @@ class Qron
   def start
 
     @started = Time.now
-    @last_sec = @started.to_i
 
     @work_pool ||=
       Stagnum::Pool.new("qron-#{Qron::VERSION}-pool", @options[:workers] || 3)
@@ -41,9 +42,8 @@ class Qron
         loop do
           break if @started == nil
           now = Time.now
-          next if now.to_i == @last_sec
           tick(now)
-          sleep(determine_sleep_time)
+          sleep(determine_sleep_time(now))
         end
       end
   end
@@ -71,8 +71,11 @@ class Qron
       perform(now, cron, command) if cron_match?(cron, now)
     end
 
-    @last_sec = now.to_i
+    #@last_sec = now.to_i
+    #@last_min = @tab_res == :minute ? now.min : nil
     @booted = true
+
+    trigger_event(:on_tick, time: now)
   end
 
   def fetch_tab
@@ -82,7 +85,10 @@ class Qron
     t = @options[:crontab] || @options[:tab] || 'qrontab'
     m = mtime(t)
 
-    @tab = nil if m > @tab_mtime
+    if m > @tab_mtime
+      @tab = nil
+      @tab_tempo = nil
+    end
     @tab_mtime = m
 
     @tab ||= parse(t)
@@ -96,6 +102,8 @@ class Qron
     @listeners << [ :on_tab_error, block ]
     @listeners << [ :on_perform_error, block ]
   end
+
+  def on_tick(&block); @listeners << [ :on_tick, block ]; end
 
   def trigger_event(event_name, ctx)
 
@@ -193,9 +201,15 @@ class Qron
       qron: self }
   end
 
-  def determine_sleep_time
+  def determine_sleep_time(now)
 
-    0.7 + (0.5 * rand)
+    @tab_res ||=
+      @tab.find { |c, _| c.is_a?(Fugit::Cron) && c.resolution == :second } ?
+        :second : :minute
+
+    res = @tab_res == :second ? 1.0 : 60.0
+
+    res - (now.to_f % res) + 0.021
   end
 end
 

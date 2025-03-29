@@ -169,5 +169,49 @@ group Qron do
       q.stop
     end
   end
+
+  group 'resolution' do
+
+    test 'sleeps until the next :minute' do
+
+      File.open('test/qrontab', 'wb') { |f|
+        f.write(%{
+          * * * * *  n = Time.now; $d << n - $t; $t = n
+        }) }
+
+      $t = Time.now
+      $d = []
+      ts = []
+
+      q = Qron.new(tab: 'test/qrontab')
+      q.on_tick { ts << Time.now.min }
+
+      wait_until(timeout: 185) { $d.size >= 2 }
+
+      assert q.tab_res, :minute
+      assert ts.uniq.length == ts.length
+    end
+
+    test 'sleeps until the next :second' do
+
+      File.open('test/qrontab', 'wb') { |f|
+        f.write(%{
+          * * * * * *  n = Time.now; $e << n - $t; $t = n
+        }) }
+
+      $t = Time.now
+      $e = []
+      ts = []
+
+      q = Qron.new(tab: 'test/qrontab')
+      q.on_tick { ts << Time.now.sec }
+
+      wait_until { $e.size > 5 }
+
+      assert q.tab_res, :second
+      assert $e.all? { |e| e > 0.0 && e < 1.2 }
+      assert ts.uniq.length == ts.length
+    end
+  end
 end
 
