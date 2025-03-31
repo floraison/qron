@@ -213,5 +213,30 @@ group Qron do
       assert ts.uniq.length == ts.length
     end
   end
+
+  group 'context' do
+
+    test 'variables can be set in the context' do
+
+      File.open('test/qrontab', 'wb') { |f|
+        f.write(%{
+          a = 1 + 2
+          b = Time.now
+          * * * * * *  $f << ctx
+        }) }
+
+      $f = []
+
+      q = Qron.new(tab: 'test/qrontab')
+      q.on_error { |ctx| raise(ctx[:error]) }
+
+      wait_until { $f.length > 2 }
+
+      ctx = $f[0]
+
+      assert ctx[:a], 3
+      assert ctx[:b].is_a?(::Time)
+    end
+  end
 end
 

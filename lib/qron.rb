@@ -66,13 +66,13 @@ class Qron
   #
   def tick(now)
 
-    fetch_tab.each do |cron, command|
+    fetch_tab
+
+    @tab.each do |cron, command|
 
       perform(now, cron, command) if cron_match?(cron, now)
     end
 
-    #@last_sec = now.to_i
-    #@last_min = @tab_res == :minute ? now.min : nil
     @booted = true
 
     trigger_event(:on_tick, time: now)
@@ -154,9 +154,17 @@ class Qron
     return nil if l == ''
     return nil if l.start_with?('#')
 
+    parse_setting(l) ||
     parse_special(l) ||
     parse_cron(l, 7) || parse_cron(l, 6) || parse_cron(l, 5) ||
-    fail(ArgumentError.new("could not parse >#{l}<"))
+    fail(ArgumentError.new("could not parse }#{l}{"))
+  end
+
+  def parse_setting(line)
+
+    m = line.match(/^([a-z][_0-9a-zA-Z]*)\s+=\s+(.+)$/)
+
+    m ? [ 'setting', "ctx[:#{m[1]}] = #{m[2]}" ] : nil
   end
 
   def parse_special(line)
@@ -178,8 +186,10 @@ class Qron
 
     if cron == '@reboot'
       @booted == false
-    else
+    elsif cron.is_a?(Fugit::Cron)
       cron.match?(time)
+    else
+      false # well...
     end
   end
 
@@ -197,8 +207,14 @@ class Qron
 
   def make_context(now, cron, command)
 
-    { time: now, cron: cron, command: command,
-      qron: self }
+    ctx = { time: now, cron: cron, command: command, qron: self }
+
+    @tab.each do |c, command|
+
+      Kernel.eval("Proc.new { |ctx| #{command} }").call(ctx) if c == 'setting'
+    end
+
+    ctx
   end
 
   def determine_sleep_time(now)
