@@ -42,6 +42,18 @@ Uses [fugit](https://github.com/floraison/fugit) for cron parsing and
 A little brother to [rufus-scheduler](https://github.com/jmettraux/rufus-scheduler).
 
 
+### `reload: true`
+
+Specifying `reload: true` when initializing tells the `Qron` instance to reload its crontab file at every tick.
+
+(Qron ticks usually every minute, unless it has one or more second precision crons specified, in which case it ticks every second).
+
+```ruby
+require 'qron'
+
+q = Qron.new(tab: 'etc/qrontab_dev', reload: true)
+```
+
 ### Timezones
 
 It's OK to use timezones in the qrontab file:
