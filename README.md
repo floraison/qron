@@ -11,9 +11,9 @@ to what's written in a crontab.
 
 Given `etc/qrontab_dev`:
 ```
-@reboot       p [ :hello, "just started" ]
-* * * * *     p [ :hello, :min, Time.now ]
-* * * * * *   p [ :hello, :sec, Time.now ]
+  @reboot       p [ :hello, "just started" ]
+  * * * * *     p [ :hello, :min, Time.now ]
+  * * * * * *   p [ :hello, :sec, Time.now ]
 ```
 
 and
@@ -46,9 +46,41 @@ A little brother to [rufus-scheduler](https://github.com/jmettraux/rufus-schedul
 
 It's OK to use timezones in the qrontab file:
 ```
-30 * * * *     Asia/Tokyo        p [ :tokyo, :min, Time.now ]
-30 4 1,15 * 5  Europe/Budapest   p [ :budapest, :min, Time.now ]
+  30 * * * *     Asia/Tokyo        p [ :tokyo, :min, Time.now ]
+  30 4 1,15 * 5  Europe/Budapest   p [ :budapest, :min, Time.now ]
 ```
+
+
+### "Settings"
+
+A qrontab file accepts, cron and commands but also "settings" that set
+variables in the context passed to commands:
+```
+  #
+  # settings
+
+  a = 1 + 2
+  b = Time.now
+
+  #
+  # actual crons
+
+  * * * * * *  pp [ :ctx, ctx ]
+```
+where the puts might output something like:
+```ruby
+[
+  :ctx,
+  { time: 'Time instance...',
+    cron: 'Fugit::Cron instance...',
+    command: 'pp [ :ctx, ctx ]',
+    qron: 'The Qron instance...',
+    a: 3,
+    b: 'Time instance...' }
+]
+```
+
+A context is instantied and prepare for each command when it triggers.
 
 
 ## LICENSE
