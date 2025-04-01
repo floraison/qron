@@ -10,7 +10,7 @@ A stupid Ruby cron thread that wakes up from time to time to perform according
 to what's written in a crontab.
 
 Given `etc/qrontab_dev`:
-```
+```ruby
   @reboot       p [ :hello, "just started" ]
   * * * * *     p [ :hello, :min, Time.now ]
   * * * * * *   p [ :hello, :sec, Time.now ]
@@ -45,7 +45,7 @@ A little brother to [rufus-scheduler](https://github.com/jmettraux/rufus-schedul
 ### Timezones
 
 It's OK to use timezones in the qrontab file:
-```
+```ruby
   30 * * * *     Asia/Tokyo        p [ :tokyo, :min, Time.now ]
   30 4 1,15 * 5  Europe/Budapest   p [ :budapest, :min, Time.now ]
 ```
@@ -55,7 +55,7 @@ It's OK to use timezones in the qrontab file:
 
 A qrontab file accepts, cron and commands but also "settings" that set
 variables in the context passed to commands:
-```
+```ruby
   #
   # settings
 
@@ -69,15 +69,13 @@ variables in the context passed to commands:
 ```
 where the puts might output something like:
 ```ruby
-[
-  :ctx,
+[ :ctx,
   { time: 'Time instance...',
     cron: 'Fugit::Cron instance...',
     command: 'pp [ :ctx, ctx ]',
     qron: 'The Qron instance...',
     a: 3,
-    b: 'Time instance...' }
-]
+    b: 'Time instance...' } ]
 ```
 
 A context is instantied and prepare for each command when it triggers.
