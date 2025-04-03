@@ -210,7 +210,7 @@ group Qron do
 
       assert q.tab_res, :second
       assert $e.all? { |e| e > 0.0 && e < 1.2 }
-      assert ts.uniq.length == ts.length
+      assert ts.uniq.length, ts.length
     end
   end
 
